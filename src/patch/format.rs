@@ -52,11 +52,11 @@ impl PatchFormatter {
         PatchDisplay { f: self, patch }.write_into(w)
     }
 
-    fn fmt_hunk<'a>(&'a self, hunk: &'a Hunk<'a, str>) -> impl Display + 'a {
+    pub fn fmt_hunk<'a>(&'a self, hunk: &'a Hunk<'a, str>) -> impl Display + 'a {
         HunkDisplay { f: self, hunk }
     }
 
-    fn write_hunk_into<T: AsRef<[u8]> + ?Sized, W: io::Write>(
+    pub fn write_hunk_into<T: AsRef<[u8]> + ?Sized, W: io::Write>(
         &self,
         hunk: &Hunk<'_, T>,
         w: W,
