@@ -48,6 +48,20 @@ impl<'a, T: ToOwned + ?Sized> Patch<'a, T> {
         self.modified.as_ref().map(AsRef::as_ref)
     }
 
+    /// Sets the name of the old file
+    #[allow(dead_code)]
+    pub fn with_original(mut self, original: impl Into<Cow<'a, T>>) -> Self {
+        self.original = Some(Filename(original.into()));
+        self
+    }
+
+    /// Sets the name of the new file
+    #[allow(dead_code)]
+    pub fn with_modified(mut self, modified: impl Into<Cow<'a, T>>) -> Self {
+        self.modified = Some(Filename(modified.into()));
+        self
+    }
+
     /// Returns the hunks in the patch
     pub fn hunks(&self) -> &[Hunk<'_, T>] {
         &self.hunks
