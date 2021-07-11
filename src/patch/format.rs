@@ -1,4 +1,5 @@
 use super::{Hunk, Line, Patch, NO_NEWLINE_AT_EOF};
+#[cfg(feature = "ansi_term")]
 use ansi_term::{Color, Style};
 use std::{
     fmt::{Display, Formatter, Result},
@@ -8,13 +9,20 @@ use std::{
 /// Struct used to adjust the formatting of a `Patch`
 #[derive(Debug)]
 pub struct PatchFormatter {
+    #[cfg(feature = "ansi_term")]
     with_color: bool,
 
+    #[cfg(feature = "ansi_term")]
     context: Style,
+    #[cfg(feature = "ansi_term")]
     delete: Style,
+    #[cfg(feature = "ansi_term")]
     insert: Style,
+    #[cfg(feature = "ansi_term")]
     hunk_header: Style,
+    #[cfg(feature = "ansi_term")]
     patch_header: Style,
+    #[cfg(feature = "ansi_term")]
     function_context: Style,
 }
 
@@ -22,17 +30,25 @@ impl PatchFormatter {
     /// Construct a new formatter
     pub fn new() -> Self {
         Self {
+            #[cfg(feature = "ansi_term")]
             with_color: false,
 
+            #[cfg(feature = "ansi_term")]
             context: Style::new(),
+            #[cfg(feature = "ansi_term")]
             delete: Color::Red.normal(),
+            #[cfg(feature = "ansi_term")]
             insert: Color::Green.normal(),
+            #[cfg(feature = "ansi_term")]
             hunk_header: Color::Cyan.normal(),
+            #[cfg(feature = "ansi_term")]
             patch_header: Style::new().bold(),
+            #[cfg(feature = "ansi_term")]
             function_context: Style::new(),
         }
     }
 
+    #[cfg(feature = "ansi_term")]
     /// Enable formatting a patch with color
     pub fn with_color(mut self) -> Self {
         self.with_color = true;
@@ -91,6 +107,7 @@ struct PatchDisplay<'a, T: ToOwned + ?Sized> {
 impl<T: ToOwned + AsRef<[u8]> + ?Sized> PatchDisplay<'_, T> {
     fn write_into<W: io::Write>(&self, mut w: W) -> io::Result<()> {
         if self.patch.original.is_some() || self.patch.modified.is_some() {
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(w, "{}", self.f.patch_header.prefix())?;
             }
@@ -104,6 +121,7 @@ impl<T: ToOwned + AsRef<[u8]> + ?Sized> PatchDisplay<'_, T> {
                 modified.write_into(&mut w)?;
                 writeln!(w)?;
             }
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(w, "{}", self.f.patch_header.suffix())?;
             }
@@ -120,6 +138,7 @@ impl<T: ToOwned + AsRef<[u8]> + ?Sized> PatchDisplay<'_, T> {
 impl Display for PatchDisplay<'_, str> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if self.patch.original.is_some() || self.patch.modified.is_some() {
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(f, "{}", self.f.patch_header.prefix())?;
             }
@@ -129,6 +148,7 @@ impl Display for PatchDisplay<'_, str> {
             if let Some(modified) = &self.patch.modified {
                 writeln!(f, "+++ {}", modified)?;
             }
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(f, "{}", self.f.patch_header.suffix())?;
             }
@@ -149,21 +169,25 @@ struct HunkDisplay<'a, T: ?Sized> {
 
 impl<T: AsRef<[u8]> + ?Sized> HunkDisplay<'_, T> {
     fn write_into<W: io::Write>(&self, mut w: W) -> io::Result<()> {
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(w, "{}", self.f.hunk_header.prefix())?;
         }
         write!(w, "@@ -{} +{} @@", self.hunk.old_range, self.hunk.new_range)?;
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(w, "{}", self.f.hunk_header.suffix())?;
         }
 
         if let Some(ctx) = self.hunk.function_context {
             write!(w, " ")?;
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(w, "{}", self.f.function_context.prefix())?;
             }
             write!(w, " ")?;
             w.write_all(ctx.as_ref())?;
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(w, "{}", self.f.function_context.suffix())?;
             }
@@ -180,20 +204,24 @@ impl<T: AsRef<[u8]> + ?Sized> HunkDisplay<'_, T> {
 
 impl Display for HunkDisplay<'_, str> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(f, "{}", self.f.hunk_header.prefix())?;
         }
         write!(f, "@@ -{} +{} @@", self.hunk.old_range, self.hunk.new_range)?;
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(f, "{}", self.f.hunk_header.suffix())?;
         }
 
         if let Some(ctx) = self.hunk.function_context {
             write!(f, " ")?;
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(f, "{}", self.f.function_context.prefix())?;
             }
             write!(f, " {}", ctx)?;
+            #[cfg(feature = "ansi_term")]
             if self.f.with_color {
                 write!(f, "{}", self.f.function_context.suffix())?;
             }
@@ -209,18 +237,27 @@ impl Display for HunkDisplay<'_, str> {
 }
 
 struct LineDisplay<'a, T: ?Sized> {
+    #[cfg_attr(not(feature = "ansi_term"), allow(dead_code))]
     f: &'a PatchFormatter,
     line: &'a Line<'a, T>,
 }
 
 impl<T: AsRef<[u8]> + ?Sized> LineDisplay<'_, T> {
     fn write_into<W: io::Write>(&self, mut w: W) -> io::Result<()> {
+        #[cfg(feature = "ansi_term")]
         let (sign, line, style) = match self.line {
             Line::Context(line) => (' ', line.as_ref(), self.f.context),
             Line::Delete(line) => ('-', line.as_ref(), self.f.delete),
             Line::Insert(line) => ('+', line.as_ref(), self.f.insert),
         };
+        #[cfg(not(feature = "ansi_term"))]
+        let (sign, line) = match self.line {
+            Line::Context(line) => (' ', line.as_ref()),
+            Line::Delete(line) => ('-', line.as_ref()),
+            Line::Insert(line) => ('+', line.as_ref()),
+        };
 
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(w, "{}", style.prefix())?;
         }
@@ -232,6 +269,7 @@ impl<T: AsRef<[u8]> + ?Sized> LineDisplay<'_, T> {
             w.write_all(line)?;
         }
 
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(w, "{}", style.suffix())?;
         }
@@ -247,12 +285,20 @@ impl<T: AsRef<[u8]> + ?Sized> LineDisplay<'_, T> {
 
 impl Display for LineDisplay<'_, str> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        #[cfg(feature = "ansi_term")]
         let (sign, line, style) = match self.line {
             Line::Context(line) => (' ', line, self.f.context),
             Line::Delete(line) => ('-', line, self.f.delete),
             Line::Insert(line) => ('+', line, self.f.insert),
         };
+        #[cfg(not(feature = "ansi_term"))]
+        let (sign, line) = match self.line {
+            Line::Context(line) => (' ', line),
+            Line::Delete(line) => ('-', line),
+            Line::Insert(line) => ('+', line),
+        };
 
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(f, "{}", style.prefix())?;
         }
@@ -263,6 +309,7 @@ impl Display for LineDisplay<'_, str> {
             write!(f, "{}{}", sign, line)?;
         }
 
+        #[cfg(feature = "ansi_term")]
         if self.f.with_color {
             write!(f, "{}", style.suffix())?;
         }

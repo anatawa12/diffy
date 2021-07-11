@@ -12,4 +12,4 @@ categories = ["text-processing"]
 edition = "2018"
 
 [dependencies]
-ansi_term = "0.12"
+ansi_term = { version = "0.12", optional = true }
