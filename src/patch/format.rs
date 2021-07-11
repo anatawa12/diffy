@@ -11,6 +11,7 @@ use std::{
 pub struct PatchFormatter {
     #[cfg(feature = "ansi_term")]
     with_color: bool,
+    with_space_on_empty_line: bool,
 
     #[cfg(feature = "ansi_term")]
     context: Style,
@@ -32,6 +33,7 @@ impl PatchFormatter {
         Self {
             #[cfg(feature = "ansi_term")]
             with_color: false,
+            with_space_on_empty_line: false,
 
             #[cfg(feature = "ansi_term")]
             context: Style::new(),
@@ -52,6 +54,12 @@ impl PatchFormatter {
     /// Enable formatting a patch with color
     pub fn with_color(mut self) -> Self {
         self.with_color = true;
+        self
+    }
+
+    /// Enable formatting a patch with color
+    pub fn with_space_on_empty_line(mut self) -> Self {
+        self.with_space_on_empty_line = true;
         self
     }
 
@@ -237,7 +245,6 @@ impl Display for HunkDisplay<'_, str> {
 }
 
 struct LineDisplay<'a, T: ?Sized> {
-    #[cfg_attr(not(feature = "ansi_term"), allow(dead_code))]
     f: &'a PatchFormatter,
     line: &'a Line<'a, T>,
 }
@@ -262,7 +269,7 @@ impl<T: AsRef<[u8]> + ?Sized> LineDisplay<'_, T> {
             write!(w, "{}", style.prefix())?;
         }
 
-        if sign == ' ' && line == b"\n" {
+        if !self.f.with_space_on_empty_line && sign == ' ' && line == b"\n" {
             w.write_all(line)?;
         } else {
             write!(w, "{}", sign)?;
